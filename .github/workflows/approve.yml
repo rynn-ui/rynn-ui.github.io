@@ -1,1 +1,42 @@
+name: Approve plugins
 
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "File name inside submissions/ (leave empty to approve ALL)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Move approved files to plugins/
+        env:
+          FILE: ${{ inputs.file }}
+        run: |
+          mkdir -p plugins
+          shopt -s nullglob
+          if [ -n "$FILE" ]; then
+            files=("submissions/$(basename "$FILE")")
+          else
+            files=(submissions/*.kfpack)
+          fi
+          for f in "${files[@]}"; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f" | sed -E 's/^[0-9]+-//')
+            if [ -e "plugins/$name" ]; then
+              name="${name%.kfpack}-$(date +%s).kfpack"
+            fi
+            git mv "$f" "plugins/$name"
+          done
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git commit -m "Approve plugins" || echo "Nothing to approve"
+          git push
