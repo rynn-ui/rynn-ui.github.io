@@ -74,7 +74,8 @@
         </div>
       </details>
 
-      <input type="search" id="q" placeholder="Search plugins" aria-label="Search plugins">
+      <input type="search" id="q" placeholder="Search plugins" aria-label="Search plugins" autocomplete="off" list="names">
+      <datalist id="names"></datalist>
       <div class="list" id="list" aria-live="polite"><p class="note">Loading plugins...</p></div>
     </div>
   </section>
@@ -88,7 +89,7 @@ const CONFIG = {
   repo: "rynn-ui.github.io",
   pluginsFolder: "plugins",
   branch: "main",
-  uploadUrl: "https://keyflaw-upload.kagedrop.workers.dev"   // paste your Cloudflare Worker URL here, e.g. https://keyflaw-upload.yourname.workers.dev
+  uploadUrl: "https://keyflaw-upload.kagedrop.workers.dev"
 };
 /* ====================== */
 const {owner,repo,pluginsFolder,branch,uploadUrl}=CONFIG;
@@ -129,6 +130,7 @@ function show(list){
     const r=await fetch(`${api}/contents/${pluginsFolder}?ref=${branch}`); if(!r.ok)throw 0;
     plugins=(await r.json()).filter(i=>i.type==="file"&&i.name.toLowerCase().endsWith(".kfpack")).sort((a,b)=>a.name.localeCompare(b.name));
     show(plugins);
+    $("names").replaceChildren(...plugins.map(p=>{const o=document.createElement("option");o.value=p.name;return o;}));
   }catch(e){const p=document.createElement("p");p.className="note";p.textContent="Could not load plugins right now.";$("list").replaceChildren(p);}
 })();
 $("q").addEventListener("input",e=>{const t=e.target.value.trim().toLowerCase();show(plugins.filter(p=>p.name.toLowerCase().includes(t)));});
